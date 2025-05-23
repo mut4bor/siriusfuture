@@ -20,15 +20,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [stream]);
 
   return (
-    <div className="video-player">
+    <div className="flex-1 aspect-video rounded-lg overflow-hidden bg-white/10">
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted={isLocal}
-        className={isLocal ? 'local' : 'remote'}
+        className="w-full h-full object-cover"
       />
-      <div className="label">{label}</div>
+      <div>{label}</div>
     </div>
   );
 };

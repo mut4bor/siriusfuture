@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiResponse, ConsumerResponse } from '../types/types';
+import { ApiResponse } from '@/types/types';
 
 const BASE_URL = 'http://localhost:3001';
 

@@ -1,8 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { VideoRoom } from './components/VideoRoom';
-import './styles/VideoConference.css';
-import { MediasoupStoreProvider } from './stores';
+import './styles/general.css';
+import { Routing } from './pages';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -10,8 +9,6 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <MediasoupStoreProvider>
-      <VideoRoom />
-    </MediasoupStoreProvider>
+    <Routing />
   </React.StrictMode>
 );

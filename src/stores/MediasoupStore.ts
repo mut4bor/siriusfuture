@@ -8,7 +8,7 @@ import type {
   Consumer,
   TransportOptions,
 } from 'mediasoup-client/lib/types';
-import type { RoomState } from '../types/types';
+import type { RoomState } from '@/types/types';
 
 export class MediasoupStore {
   private socket: WebSocket | null = null;
