@@ -1,0 +1,44 @@
+.video-conference {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.video-player {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+}
+
+.video-player video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-player .label {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.local {
+  transform: scaleX(-1);
+}
