@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev:server": "tsx watch server/index.ts",
-    "dev:client": "vite",
-    "dev:client:host": "vite --host",
+    "dev": "vite",
+    "dev:host": "vite --host",
     "preview": "vite preview",
     "test:watch": "vitest watch"
   },
@@ -15,15 +14,9 @@
   "type": "module",
   "dependencies": {
     "@tailwindcss/vite": "^4.1.7",
-    "@types/node": "^22.15.21",
     "@types/react": "^19.1.5",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.4.1",
-    "axios": "^1.9.0",
-    "cors": "^2.8.5",
-    "events": "^3.3.0",
-    "express": "^5.1.0",
-    "mediasoup": "^3.15.8",
     "mediasoup-client": "^3.11.0",
     "mobx": "^6.13.7",
     "mobx-react-lite": "^4.1.0",
@@ -31,15 +24,11 @@
     "react-router": "^7.6.0",
     "react-router-dom": "^7.6.0",
     "tailwindcss": "^4.1.7",
-    "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
-    "vite-plugin-checker": "^0.9.3",
-    "ws": "^8.18.2"
+    "vite-plugin-checker": "^0.9.3"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.18",
-    "@types/express": "^5.0.2",
     "@types/react-dom": "^19.1.5",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",

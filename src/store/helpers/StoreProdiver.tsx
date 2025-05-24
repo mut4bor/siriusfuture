@@ -1,14 +1,14 @@
 import { createContext, useContext } from 'react';
-import { MediasoupStore } from './MediasoupStore';
+import { CallStore } from '../CallStore';
 
-const MediasoupStoreContext = createContext<MediasoupStore | null>(null);
+const MediasoupStoreContext = createContext<CallStore | null>(null);
 
 export const MediasoupStoreProvider = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
-  const store = new MediasoupStore();
+  const store = new CallStore();
 
   return (
     <MediasoupStoreContext.Provider value={store}>

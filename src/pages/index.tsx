@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import MainPage from '@/pages/main';
 import RoomIdPage from '@/pages/roomId';
-import { MediasoupStoreProvider } from '@/stores/prodiver';
+import { MediasoupStoreProvider } from '@/store/helpers/StoreProdiver';
 
 const routesArray = [
   { path: `/`, Component: MainPage },
@@ -18,7 +18,7 @@ export const Routing = () => {
   );
 
   return (
-    <div className="p-2 w-full min-h-svh bg-[#222] text-white">
+    <div className="p-2 w-full min-h-svh bg-gray-900 text-white">
       <MediasoupStoreProvider>
         <RouterProvider router={router} />
       </MediasoupStoreProvider>
