@@ -55,7 +55,8 @@ export class SignalingChannel {
 
       this.socket.addEventListener('message', event => {
         try {
-          const message = JSON.parse(event.data) as SignalingMessage;
+          const message: SignalingMessage = JSON.parse(event.data);
+          console.log('socketmessage', message);
           this.eventEmitter.emit('message', message);
         } catch (error) {
           console.error('Failed to parse message:', error);
@@ -66,10 +67,13 @@ export class SignalingChannel {
 
   send(message: SignalingMessage): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      console.log('Sent message');
       this.socket.send(JSON.stringify(message));
     } else {
       // Кладём в очередь, если сокет не готов
       this.messageQueue.push(message);
+
+      console.log('Put message to queue');
     }
   }
 

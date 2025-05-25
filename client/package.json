@@ -6,6 +6,7 @@
     "dev": "vite",
     "dev:host": "vite --host",
     "preview": "vite preview",
+    "build": "vite build",
     "test:watch": "vitest watch"
   },
   "keywords": [],
@@ -25,6 +26,7 @@
     "react-router-dom": "^7.6.0",
     "tailwindcss": "^4.1.7",
     "typescript": "^5.8.3",
+    "uuid": "^11.1.0",
     "vite": "^6.3.5",
     "vite-plugin-checker": "^0.9.3"
   },

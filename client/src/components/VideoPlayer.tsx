@@ -13,10 +13,12 @@ const VideoPlayer = ({ stream, isMuted, label }: Props) => {
   useEffect(() => {
     if (!stream) {
       console.log('No stream provided to VideoPlayer');
+      setTrackInfo('No stream');
       return;
     }
 
     // Log detailed stream information
+
     const tracks = stream.getTracks();
     const trackDetails = tracks
       .map(
@@ -37,11 +39,6 @@ const VideoPlayer = ({ stream, isMuted, label }: Props) => {
     if (videoRef.current) {
       console.log(`Attaching stream ${stream.id} to video element`);
       videoRef.current.srcObject = stream;
-
-      // Attempt to play (important for mobile browsers)
-      videoRef.current.play().catch(err => {
-        console.error('Error playing video:', err);
-      });
     }
 
     return () => {
@@ -71,6 +68,7 @@ const VideoPlayer = ({ stream, isMuted, label }: Props) => {
         playsInline
         muted={isMuted}
         className="w-full h-full object-cover"
+        loop
         onPlaying={handlePlaying}
         onWaiting={handleWaiting}
         onError={handleError}

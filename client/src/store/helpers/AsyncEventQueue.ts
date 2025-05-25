@@ -10,8 +10,7 @@ export class AsyncEventQueue {
   }
 
   private async processQueue(): Promise<void> {
-    if (this.processing || this.queue.length === 0) return;
-
+    if (this.processing) return;
     this.processing = true;
 
     while (this.queue.length > 0) {
@@ -24,5 +23,10 @@ export class AsyncEventQueue {
     }
 
     this.processing = false;
+
+    // Если за время обработки появились новые задачи — обработать их
+    if (this.queue.length > 0) {
+      this.processQueue();
+    }
   }
 }

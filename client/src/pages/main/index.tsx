@@ -1,18 +1,17 @@
 import Button from '@/components/Button';
 import Input from '@/components/Input';
-import { useMediasoupStore } from '@/store/helpers/StoreProdiver';
+import { isValidUUID } from '@/utils/isValidUUID';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-
+import { v4 as uuid } from 'uuid';
 const MainPage = observer(() => {
-  const callStore = useMediasoupStore();
   const navigate = useNavigate();
   const [joinRoomCodeValue, setJoinRoomCodeValue] = useState('');
   const [warningText, setWarningText] = useState('');
 
   const handleCreateRoom = async () => {
-    const roomId = '9f704e1d-0e19-4c83-839b-fdc399918ddc';
+    const roomId = uuid();
     if (roomId) {
       navigate(`/${roomId}`);
     }
@@ -20,12 +19,6 @@ const MainPage = observer(() => {
 
   const handleJoinClick = () => {
     navigate(`/${joinRoomCodeValue}`);
-  };
-
-  const isValidUUID = (uuid: string): boolean => {
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(uuid);
   };
 
   return (
@@ -52,13 +45,13 @@ const MainPage = observer(() => {
           </div>
           <Button
             onClick={() => {
-              // if (isValidUUID(joinRoomCodeValue)) {
-              handleJoinClick();
-              setWarningText('');
-              // } else {
-              //   setWarningText('Wrong code, try again');
-              //   setJoinRoomCodeValue('');
-              // }
+              if (isValidUUID(joinRoomCodeValue)) {
+                handleJoinClick();
+                setWarningText('');
+              } else {
+                setWarningText('Wrong code, try again');
+                setJoinRoomCodeValue('');
+              }
             }}
             disabled={!joinRoomCodeValue}
             className="w-full bg-[#cc5174] hover:bg-[#a95287] text-white py-3 rounded-lg transition"

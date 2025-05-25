@@ -28,6 +28,11 @@ export class VideoCallClient extends TypedEventEmitter<EventMap> {
   private userId: string | null = null;
   private localStream: MediaStream | null = null;
   private iceServers: RTCIceServer[];
+  private pendingProducers: { producerId: string; userId: string }[] = [];
+  private pendingProduceCallbacks = new Map<
+    string, // transportId
+    { callback: Function; errback: Function }
+  >();
 
   constructor(options: VideoCallClientOptions) {
     super();
@@ -40,8 +45,9 @@ export class VideoCallClient extends TypedEventEmitter<EventMap> {
 
   private setupSignalingListeners(): void {
     this.signaling.on('message', message => {
+      console.log('signallingmessage', message);
       this.eventQueue.enqueue(async () => {
-        await this.handleSignalingMessage(message);
+        this.handleSignalingMessage(message);
       });
     });
   }
@@ -49,6 +55,7 @@ export class VideoCallClient extends TypedEventEmitter<EventMap> {
   private async handleSignalingMessage(
     message: SignalingMessage
   ): Promise<void> {
+    console.log('handlemessage', message);
     switch (message.type) {
       case 'welcome':
         this.emit('connected');
@@ -58,17 +65,57 @@ export class VideoCallClient extends TypedEventEmitter<EventMap> {
         await this.loadDevice(message.routerRtpCapabilities);
         break;
 
+      case 'newProducer':
+        if (!this.device || !this.recvTransport) {
+          console.log(
+            `Received newProducer but not ready yet, queueing: ${message.producerId}`
+          );
+          // Queue this message to handle later when transport is ready
+          this.pendingProducers = this.pendingProducers || [];
+          this.pendingProducers.push({
+            producerId: message.producerId,
+            userId: message.userId,
+          });
+        } else {
+          await this.subscribeToProducer(message.producerId, message.userId);
+        }
+        break;
+
       case 'transportCreated':
         if (message.direction === 'send') {
           await this.connectSendTransport(message.transportOptions);
         } else if (message.direction === 'recv') {
           await this.connectRecvTransport(message.transportOptions);
+
+          // Process any pending producers after receive transport is ready
+          if (this.pendingProducers && this.pendingProducers.length > 0) {
+            console.log(
+              `Processing ${this.pendingProducers.length} pending producers`
+            );
+            for (const producer of this.pendingProducers) {
+              await this.subscribeToProducer(
+                producer.producerId,
+                producer.userId
+              );
+            }
+            this.pendingProducers = [];
+          }
         }
         break;
 
-      case 'newProducer':
-        await this.subscribeToProducer(message.producerId, message.userId);
+      case 'producerCreated': {
+        const { id, requestId } = message;
+        const pending = this.pendingProduceCallbacks.get(requestId);
+        console.log('pendingCallback', pending);
+        if (pending) {
+          pending.callback({ id });
+          console.log('callback worked with id', id);
+          this.pendingProduceCallbacks.delete(requestId);
+        } else {
+          console.warn('No pending produce callback for', requestId);
+        }
         break;
+      }
 
       case 'consumerCreated':
         await this.handleConsumerCreated(message);
@@ -140,18 +187,21 @@ export class VideoCallClient extends TypedEventEmitter<EventMap> {
     this.sendTransport.on(
       'produce',
       async ({ kind, rtpParameters, appData }, callback, errback) => {
+        const requestId = `${this.sendTransport!.id}-${Date.now()}`;
         try {
+          this.pendingProduceCallbacks.set(requestId, {
+            callback,
+            errback,
+          });
+
           this.signaling.send({
             type: 'produce',
             transportId: this.sendTransport!.id,
             kind,
             rtpParameters,
             appData,
+            requestId,
           });
-
-          // We should receive a producerId from the server
-          // For now, we'll just use a fake one
-          callback({ id: `${kind}-${Date.now()}` });
         } catch (error) {
           errback(error as Error);
         }
@@ -211,33 +261,33 @@ export class VideoCallClient extends TypedEventEmitter<EventMap> {
         console.error('Send transport not created yet!');
       }
 
-      // // Produce video
-      // if (this.localStream.getVideoTracks().length > 0 && this.sendTransport) {
-      //   const videoTrack = this.localStream.getVideoTracks()[0];
-      //   const videoProducer = await this.sendTransport.produce({
-      //     track: videoTrack,
-      //     encodings: [
-      //       { maxBitrate: 100000 },
-      //       { maxBitrate: 300000 },
-      //       { maxBitrate: 900000 },
-      //     ],
-      //     codecOptions: {
-      //       videoGoogleStartBitrate: 1000,
-      //     },
-      //   });
+      // Produce video
+      if (this.localStream.getVideoTracks().length > 0 && this.sendTransport) {
+        const videoTrack = this.localStream.getVideoTracks()[0];
+        const videoProducer = await this.sendTransport.produce({
+          track: videoTrack,
+          encodings: [
+            { maxBitrate: 100000 },
+            { maxBitrate: 300000 },
+            { maxBitrate: 900000 },
+          ],
+          codecOptions: {
+            videoGoogleStartBitrate: 1000,
+          },
+        });
 
-      //   this.producers.set('video', videoProducer);
-      // }
+        this.producers.set('video', videoProducer);
+      }
 
-      // // Produce audio
-      // if (this.localStream.getAudioTracks().length > 0 && this.sendTransport) {
-      //   const audioTrack = this.localStream.getAudioTracks()[0];
-      //   const audioProducer = await this.sendTransport.produce({
-      //     track: audioTrack,
-      //   });
+      // Produce audio
+      if (this.localStream.getAudioTracks().length > 0 && this.sendTransport) {
+        const audioTrack = this.localStream.getAudioTracks()[0];
+        const audioProducer = await this.sendTransport.produce({
+          track: audioTrack,
+        });
 
-      //   this.producers.set('audio', audioProducer);
-      // }
+        this.producers.set('audio', audioProducer);
+      }
     } catch (error) {
       this.emit('error', error as Error);
     }
@@ -250,6 +300,8 @@ export class VideoCallClient extends TypedEventEmitter<EventMap> {
     if (!this.device || !this.recvTransport) {
       throw new Error('Device or receive transport not ready');
     }
+
+    console.log('Subscribing', producerId);
 
     this.signaling.send({
       type: 'consume',
@@ -271,7 +323,7 @@ export class VideoCallClient extends TypedEventEmitter<EventMap> {
     const consumer = await this.recvTransport.consume({
       id,
       producerId,
-      kind: kind as MediaKind,
+      kind,
       rtpParameters,
     });
 
@@ -284,7 +336,7 @@ export class VideoCallClient extends TypedEventEmitter<EventMap> {
     this.emit('newStream', {
       userId,
       stream,
-      kind: kind as 'video' | 'audio',
+      kind,
     });
 
     // Resume the consumer

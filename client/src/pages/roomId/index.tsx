@@ -1,29 +1,28 @@
 import Button from '@/components/Button';
-import Input from '@/components/Input';
 import VideoPlayer from '@/components/VideoPlayer';
+import { WS_URL } from '@/config';
 import { useMediasoupStore } from '@/store/helpers/StoreProdiver';
+import { isValidUUID } from '@/utils/isValidUUID';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
 const RoomIdPage = observer(() => {
   const { roomId } = useParams();
+
   const callStore = useMediasoupStore();
   const navigate = useNavigate();
 
-  const [simulatedPeopleAmount, setSimulatedPeopleAmount] = useState(8);
+  const localStream = callStore.localParticipant?.videoStream;
+  const remoteParticipantsAmount = callStore.remoteParticipants.length;
 
   useEffect(() => {
-    // Initialize the call store with your signaling server URL
     callStore.initialize({
-      signalingUrl: 'ws://localhost:3001',
+      signalingUrl: WS_URL,
     });
 
     return () => {
-      // Only leave the call if we're actually connected
-      if (callStore.isConnected()) {
-        callStore.leaveCall();
-      }
+      callStore.leaveCall();
     };
   }, []);
 
@@ -35,6 +34,10 @@ const RoomIdPage = observer(() => {
   };
 
   useEffect(() => {
+    if (!isValidUUID(roomId)) {
+      navigate('/');
+    }
+
     joinCall();
   }, [roomId]);
 
@@ -45,28 +48,16 @@ const RoomIdPage = observer(() => {
 
   const getGridColumnsAmount = () =>
     `md:grid-cols-${Math.min(
-      simulatedPeopleAmount > 0
-        ? simulatedPeopleAmount === 1
+      remoteParticipantsAmount > 0
+        ? remoteParticipantsAmount === 1
           ? 2
-          : simulatedPeopleAmount
+          : remoteParticipantsAmount
         : 1,
       3
     )}`;
 
-  console.log('localStream', callStore.localParticipant?.videoStream);
-  console.log('localid', callStore.localParticipantId);
-
   return (
     <div className="flex flex-col gap-2 max-w-[1400px] m-auto">
-      {/* <p>Room ID: {callStore}</p> */}
-      <Input
-        value={`${simulatedPeopleAmount}`}
-        onChange={value =>
-          setSimulatedPeopleAmount(value === '' ? 0 : Math.abs(parseInt(value)))
-        }
-        label="Симулировать количество участников в комнате"
-        type="number"
-      />
       {callStore.connectionState === 'error' && (
         <div className="error">
           <p>Error: {callStore.error?.message}</p>
@@ -77,18 +68,14 @@ const RoomIdPage = observer(() => {
         <div
           className={`grid gap-2 justify-center w-full h-full grid-cols-1 sm:grid-cols-2 ${getGridColumnsAmount()} auto-rows-fr`}
         >
-          <VideoPlayer
-            stream={callStore.localParticipant?.videoStream ?? null}
-            label={`Вы (${callStore.localParticipant?.userId})`}
-            isMuted
-          />
-          {/* {Array.from({ length: simulatedPeopleAmount }).map((_, index) => (
+          {localStream && (
             <VideoPlayer
-              key={index}
-              stream={null}
-              label={`Пользователь ${index + 1}`}
+              key={localStream.id}
+              stream={localStream}
+              label={`Вы (${callStore.localParticipant?.userId})`}
+              isMuted
             />
-          ))} */}
+          )}
 
           {callStore.remoteParticipants.map(participant => (
             <VideoPlayer
